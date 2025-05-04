@@ -1,4 +1,6 @@
 // script.js
+let isUserTyping = false;
+let typingTimeout;
 
 // State & constants
 const thirdMolars = [1, 16, 17, 32];
@@ -25,22 +27,27 @@ function getToothType(n) {
 }
 
 // Build the tooth grids
-function createGrid(id, start) {
-  const grid = document.getElementById(id);
-  for (let i = 0; i < 16; i++) {
-    const t = start + i;
-    const wrapper = document.createElement('div');
-    wrapper.className = 'tooth-wrapper';
-    wrapper.innerHTML = `
-      <div class="tooth-button ${getToothType(t)}" data-tooth="${t}">
-        <span class="tooth-label">${t}</span>
-      </div>
-      <span class="tooth-type-label">${getToothType(t)}</span>`;
-    grid.appendChild(wrapper);
+function createGrid(id, start, end, reverse = false) {
+    const grid = document.getElementById(id);
+    const range = reverse 
+      ? Array.from({ length: end - start + 1 }, (_, i) => end - i)  // Reversed range for mandibular
+      : Array.from({ length: end - start + 1 }, (_, i) => start + i); // Normal range for maxillary
+  
+    range.forEach(t => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'tooth-wrapper';
+      wrapper.innerHTML = `
+        <div class="tooth-button ${getToothType(t)}" data-tooth="${t}">
+          <span class="tooth-label">${t}</span>
+        </div>
+        <span class="tooth-type-label">${getToothType(t)}</span>`;
+      grid.appendChild(wrapper);
+    });
   }
-}
-createGrid('maxillaryGrid', 1);
-createGrid('mandibularGrid', 17);
+  
+  // Create grids with correct ranges
+  createGrid('maxillaryGrid', 1, 16);  // Maxillary (1-16)
+  createGrid('mandibularGrid', 17, 32, true);  // Mandibular (32-17)
 
 // Render selection & disabled states
 function renderButtons() {
@@ -55,9 +62,12 @@ function renderButtons() {
 
 // Sync text input from selection
 function syncText() {
-  document.getElementById('teethInput').value =
-    Array.from(toggleMissing).sort((a,b)=>a-b).join(',');
-}
+    if (isUserTyping) return; // Don't overwrite while user is typing
+  
+    const sorted = Array.from(toggleMissing).sort((a, b) => a - b);
+    document.getElementById('teethInput').value = sorted.join(',');
+  }
+  
 
 // Disable ignored teeth buttons
 function updateDisabledTeeth() {
@@ -189,15 +199,41 @@ function onMouseUp() {
 });
 document.addEventListener('mouseup', onMouseUp);
 
-// Text input ↔ selection sync
-document.getElementById('teethInput').addEventListener('input', e => {
-  toggleMissing = new Set(
-    e.target.value.split(',').map(Number).filter(n => n>=1 && n<=32)
-  );
-  renderButtons();
-});
+// Input listener
+document.getElementById('teethInput').addEventListener('input', (e) => {
+    const input = e.target.value.trim();
+  
+    // Validate: Only digits 1–32, comma-separated
+    const valid = /^(\s*\d{1,2}\s*(,\s*\d{1,2}\s*)*)?$/.test(input);
+    if (!valid) {
+      e.target.classList.add('invalid');
+      return;
+    } else {
+      e.target.classList.remove('invalid');
+    }
+  
+    // Set isUserTyping to true when the user is typing
+    isUserTyping = true;
+  
+    const values = input
+      .split(',')
+      .map(n => parseInt(n.trim()))
+      .filter(n => !isNaN(n) && n >= 1 && n <= 32);
+  
+    toggleMissing.clear();
+    values.forEach(n => toggleMissing.add(n));
+  
+    renderButtons(); // Update visual state
+  });
 
+  // When input stops being edited, allow syncText to run
+document.getElementById('teethInput').addEventListener('blur', () => {
+    // Once the user exits the input box (blur event), stop typing
+    isUserTyping = false;
+    syncText(); // Now sort and update the text field after typing ends
+});
 // Ignore-second ⇒ auto-check 3rd & refresh
+
 document.getElementById('ignoreSecondMolars').addEventListener('change', e => {
   if (e.target.checked) {
     document.getElementById('ignoreThirdMolars').checked = true;

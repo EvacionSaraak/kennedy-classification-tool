@@ -29,6 +29,11 @@ html, body {
     font-size: 1rem;
   }
   
+  input.invalid {
+    border: 2px solid red;
+  }
+  
+  
   /* New wrapper layout */
   .options-wrapper {
     display: flex;
