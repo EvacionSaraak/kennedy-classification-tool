@@ -18,6 +18,10 @@ const descriptors = {
   "Kennedy Class IV":  "Anterior midline crossing missing teeth"
 };
 
+function capitalizeFirstLetter(val) {
+    return String(val).charAt(0).toUpperCase() + String(val).slice(1);
+}
+
 // Utility: decide shape
 function getToothType(n) {
   if ([1,2,3,14,15,16,17,18,19,30,31,32].includes(n)) return 'molar';
@@ -40,7 +44,7 @@ function createGrid(id, start, end, reverse = false) {
         <div class="tooth-button ${getToothType(t)}" data-tooth="${t}">
           <span class="tooth-label">${t}</span>
         </div>
-        <span class="tooth-type-label">${getToothType(t)}</span>`;
+        <span class="tooth-type-label">${capitalizeFirstLetter(getToothType(t))}</span>`;
       grid.appendChild(wrapper);
     });
   }

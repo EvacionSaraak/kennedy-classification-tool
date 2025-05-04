@@ -117,8 +117,16 @@ html, body {
     border: 2px solid #aaa;
     cursor: pointer;
     user-select: none;
+    transition: transform 0.2s ease-in-out;  /* Smooth transition for the pop-out effect */
+  }
+
+  /* Hover effect to make the tooth pop out */
+  .tooth-button:hover {
+    transform: scale(1.1);  /* Slightly enlarge the tooth */
+    z-index: 1;  /* Ensure the hovered element is on top */
   }
   
+  /* When the tooth is selected, apply the selected styles */
   .tooth-button.selected {
     background: linear-gradient(to bottom, #f66, #c63);
     color: #fff;
