@@ -8,18 +8,30 @@
 <body>
   <div class="container">
     <h2>Kennedy Classification Calculator</h2>
+
+    <!-- Line 1: Input box -->
     <input type="text" id="teethInput" placeholder="Text Input (1–32, comma-separated)">
-    <div class="options">
-      <label><input type="checkbox" id="ignoreThirdMolars"> Ignore 3rd molars (1,16,17,32)</label>
-      <label><input type="checkbox" id="ignoreSecondMolars"> Ignore 2nd molars (2,15,18,31)</label>
-      <button class="reset-btn" id="resetBtn">Reset</button>
-    </div>
+
+    <!-- Line 2: Maxillary -->
     <div class="section-label">Maxillary (1–16)</div>
     <div id="maxillaryGrid" class="tooth-grid maxillary"></div>
+
+    <!-- Line 3: Mandibular -->
     <div class="section-label">Mandibular (17–32)</div>
     <div id="mandibularGrid" class="tooth-grid mandibular"></div>
-    <div id="output"></div>
-    <div id="issues">Known Issues: The Ignore Buttons just don't work.</div>
+
+    <!-- Line 4: Ignore checkboxes stacked + reset + output -->
+    <div class="options-wrapper">
+      <div>
+        <div class="checkboxes">
+          <label><input type="checkbox" id="ignoreThirdMolars"> Ignore 3rd molars (1,16,17,32)</label>
+          <label><input type="checkbox" id="ignoreSecondMolars"> Ignore 2nd molars (2,15,18,31)</label>
+        </div>
+        <div id="issues">Known Issues: The logic just might be flawed. <br> Contact the Developer if known.</div>
+      </div>
+      <button class="reset-btn" id="resetBtn">Reset</button>
+      <div id="output"></div>
+    </div>
   </div>
 
   <script src="kennedy.js"></script>
