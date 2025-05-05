@@ -22,6 +22,25 @@ function capitalizeFirstLetter(val) {
     return String(val).charAt(0).toUpperCase() + String(val).slice(1);
 }
 
+//Updates Output
+function updateOutput() {
+  const sel = Array.from(toggleMissing);
+
+  // Call classifyArch for the maxillary (1–16)
+  const up = classifyArch(sel, [...Array(16)].map((_, i) => i + 1));
+
+  // Call classifyArch for the mandibular (17–32)
+  const lo = classifyArch(sel, [...Array(16)].map((_, i) => i + 17));
+
+  const out = [];
+  if (up) out.push(`<div><strong>Maxillary:</strong><br>${up}</div>`);
+  if (lo) out.push(`<div><strong>Mandibular:</strong><br>${lo}</div>`);
+
+  document.getElementById('output').innerHTML =
+    out.length ? out.join('') : 'No missing teeth.';
+}
+
+
 // Utility: decide shape
 function getToothType(n) {
   if ([1,2,3,14,15,16,17,18,19,30,31,32].includes(n)) return 'molar';
