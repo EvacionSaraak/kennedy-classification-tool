@@ -30,6 +30,45 @@ function getToothType(n) {
   return 'incisor';
 }
 
+function getToothName(n) {
+  const toothNames = {
+  1: 'Third Molar (Wisdom Tooth)',
+  2: 'Second Molar',
+  3: 'First Molar',
+  4: 'Second Bicuspid / Premolar',
+  5: 'First Bicuspid / Premolar',
+  6: 'Canine',
+  7: 'Lateral Incisor',
+  8: 'Central Incisor',
+  9: 'Central Incisor',
+  10: 'Lateral Incisor',
+  11: 'Canine',
+  12: 'First Bicuspid / Premolar',
+  13: 'Second Bicuspid / Premolar',
+  14: 'First Molar',
+  15: 'Second Molar',
+  16: 'Third Molar (Wisdom Tooth)',
+  17: 'Third Molar (Wisdom Tooth)',
+  18: 'Second Molar',
+  19: 'First Molar',
+  20: 'Second Bicuspid / Premolar',
+  21: 'First Bicuspid / Premolar',
+  22: 'Canine',
+  23: 'Lateral Incisor',
+  24: 'Central Incisor',
+  25: 'Central Incisor',
+  26: 'Lateral Incisor',
+  27: 'Canine',
+  28: 'First Bicuspid / Premolar',
+  29: 'Second Bicuspid / Premolar',
+  30: 'First Molar',
+  31: 'Second Molar',
+  32: 'Third Molar (Wisdom Tooth)',
+};
+  return toothNames[n] || `Tooth ${n}`;
+}
+
+
 // Build the tooth grids
 function createGrid(id, start, end, reverse = false) {
     const grid = document.getElementById(id);
@@ -37,15 +76,36 @@ function createGrid(id, start, end, reverse = false) {
       ? Array.from({ length: end - start + 1 }, (_, i) => end - i)  // Reversed range for mandibular
       : Array.from({ length: end - start + 1 }, (_, i) => start + i); // Normal range for maxillary
   
-    range.forEach(t => {
+  range.forEach(t => {
       const wrapper = document.createElement('div');
       wrapper.className = 'tooth-wrapper';
       wrapper.innerHTML = `
-        <div class="tooth-button ${getToothType(t)}" data-tooth="${t}">
+  <div class="tooth-button ${getToothType(t)}" data-tooth="${t}">
           <span class="tooth-label">${t}</span>
         </div>
         <span class="tooth-type-label">${capitalizeFirstLetter(getToothType(t))}</span>`;
       grid.appendChild(wrapper);
+	    
+	  const tooltip = document.getElementById('tooltip');
+
+	document.querySelectorAll('.tooth-button').forEach(btn => {
+	  const toothNum = btn.getAttribute('data-tooth');
+	  const name = getToothName(parseInt(toothNum));
+
+	  btn.addEventListener('mouseenter', (e) => {
+		tooltip.textContent = name;
+		tooltip.style.opacity = 1;
+	  });
+
+	  btn.addEventListener('mousemove', (e) => {
+		tooltip.style.left = e.pageX + 10 + 'px';
+		tooltip.style.top = e.pageY + 10 + 'px';
+	  });
+
+	  btn.addEventListener('mouseleave', () => {
+		tooltip.style.opacity = 0;
+	  });
+	});
     });
   }
   
