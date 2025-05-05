@@ -136,10 +136,23 @@ function formatClassification(item) {
 }
 
 function updateOutput() {
-  const sel = Array.from(toggleMissing);
+  const ignoreThird = document.getElementById("ignoreThirdMolars").checked;
+  const ignoreSecond = document.getElementById("ignoreSecondMolars").checked;
 
-  const maxObj = classifyArch(sel, [...Array(16)].map((_, i) => i + 1));
-  const manObj = classifyArch(sel, [...Array(16)].map((_, i) => i + 17));
+  // Get all selected/missing teeth from toggle buttons
+  let selected = Array.from(document.querySelectorAll(".tooth-button.selected"))
+    .map(btn => parseInt(btn.dataset.tooth));
+
+  // Apply ignore logic
+  if (ignoreThird) {
+    selected = selected.filter(t => ![1, 16, 17, 32].includes(t));
+  }
+  if (ignoreSecond) {
+    selected = selected.filter(t => ![2, 15, 18, 31].includes(t));
+  }
+
+  const maxObj = classifyArch(selected, [...Array(16)].map((_, i) => i + 1));
+  const manObj = classifyArch(selected, [...Array(16)].map((_, i) => i + 17));
 
   const parts = [];
   if (maxObj) parts.push(`<div><strong>Maxillary:</strong><br>${formatClassification(maxObj)}</div>`);
@@ -147,6 +160,7 @@ function updateOutput() {
 
   document.getElementById('output').innerHTML = parts.join('') || '';
 }
+
 
 // Toggle a tooth’s selection
 function toggleTooth(n) {
