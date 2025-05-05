@@ -8,6 +8,8 @@ let lastDragged = null;
 
 const thirdMolars = [1, 16, 17, 32];
 const secondMolars = [2, 15, 18, 31];
+const MAXILLARY_RANGE = [...Array(16)].map((_, i) => i + 1);
+const MANDIBULAR_RANGE = [...Array(16)].map((_, i) => i + 17);
 
 const descriptors = {
   "Class I": "Bilateral distal extension (posterior teeth missing on both sides)",
@@ -49,6 +51,44 @@ function formatClassification(item) {
     ? `<strong>${item.class} modification ${item.mod}</strong>`
     : `<strong>${item.class}</strong>`;
   return `${label}<br><em>${item.desc}</em>`;
+}
+
+function getToothName(n) {
+  const toothNames = {
+    1: 'Third Molar (Posterior) (Wisdom Tooth)',
+    2: 'Second Molar (Posterior)',
+    3: 'First Molar (Posterior)',
+    4: 'Second Premolar (Bicuspid)',
+    5: 'First Premolar (Bicuspid)',
+    6: 'Canine (Anterior)',
+    7: 'Lateral Incisor (Anterior)',
+    8: 'Central Incisor (Anterior)',
+    9: 'Central Incisor (Anterior)',
+    10: 'Lateral Incisor (Anterior)',
+    11: 'Canine (Anterior)',
+    12: 'First Premolar (Bicuspid)',
+    13: 'Second Premolar (Bicuspid)',
+    14: 'First Molar (Posterior)',
+    15: 'Second Molar (Posterior)',
+    16: 'Third Molar (Wisdom Tooth)',
+    17: 'Third Molar (Wisdom Tooth)',
+    18: 'Second Molar (Posterior)',
+    19: 'First Molar (Posterior)',
+    20: 'Second Premolar (Bicuspid)',
+    21: 'First Premolar (Bicuspid)',
+    22: 'Canine (Anterior)',
+    23: 'Lateral Incisor (Anterior)',
+    24: 'Central Incisor (Anterior)',
+    25: 'Central Incisor (Anterior)',
+    26: 'Lateral Incisor (Anterior)',
+    27: 'Canine (Anterior)',
+    28: 'First Premolar (Bicuspid)',
+    29: 'Second Premolar (Bicuspid)',
+    30: 'First Molar (Posterior)',
+    31: 'Second Molar (Posterior)',
+    32: 'Third Molar (Posterior) (Wisdom Tooth)',
+  };
+  return toothNames[n] || `Tooth ${n}`;
 }
 
 // ========== Classification ==========
@@ -126,11 +166,42 @@ function createGrid(id, start, end, reverse = false) {
     const wrapper = document.createElement('div');
     wrapper.className = 'tooth-wrapper';
     wrapper.innerHTML = `
-      <div class="tooth-button ${getToothType(t)}" data-tooth="${t}">
+      <div class="tooth-button ${getToothType(t)}" data-tooth="${t}" role="button" aria-label="Tooth ${t}: ${getToothName(t)}">
         <span class="tooth-label">${t}</span>
       </div>
       <span class="tooth-type-label">${capitalizeFirstLetter(getToothType(t))}</span>`;
     grid.appendChild(wrapper);
+  });
+
+  const tooltip = document.getElementById('tooltip');
+  document.querySelectorAll('.tooth-button').forEach(btn => {
+    const toothNum = btn.getAttribute('data-tooth');
+    const name = getToothName(parseInt(toothNum));
+
+    btn.addEventListener('mouseenter', (e) => {
+      tooltip.textContent = name;
+      tooltip.style.opacity = 1;
+    });
+
+    btn.addEventListener('mousemove', (e) => {
+      const tooltipWidth = tooltip.offsetWidth;
+      const pageWidth = window.innerWidth;
+    
+      let left = e.pageX + 10;
+      let top = e.pageY + 10;
+    
+      // Check for right-edge overflow
+      if (left + tooltipWidth > pageWidth) {
+        left = e.pageX - tooltipWidth - 10;
+      }
+    
+      tooltip.style.left = `${left}px`;
+      tooltip.style.top = `${top}px`;
+    });
+
+    btn.addEventListener('mouseleave', () => {
+      tooltip.style.opacity = 0;
+    });
   });
 }
 
@@ -202,8 +273,8 @@ function updateOutput() {
   const selected = Array.from(document.querySelectorAll(".tooth-button.selected"))
     .map(btn => parseInt(btn.dataset.tooth));
 
-  const maxObj = classifyArch(selected, [...Array(16)].map((_, i) => i + 1), ignoreThird, ignoreSecond);
-  const manObj = classifyArch(selected, [...Array(16)].map((_, i) => i + 17), ignoreThird, ignoreSecond);
+  const maxObj = classifyArch(selected, MAXILLARY_RANGE, ignoreThird, ignoreSecond);
+  const manObj = classifyArch(selected, MANDIBULAR_RANGE, ignoreThird, ignoreSecond);
 
   const parts = [];
   if (maxObj) parts.push(`<div><strong>Maxillary:</strong><br>${formatClassification(maxObj)}</div>`);
