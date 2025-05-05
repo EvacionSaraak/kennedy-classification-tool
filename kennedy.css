@@ -6,7 +6,7 @@ html, body {
     overflow-x: hidden;
     overflow: hidden;
   }
-  
+
   .tooltip {
 	  position: absolute;
 	  padding: 6px 10px;
@@ -21,7 +21,6 @@ html, body {
 	  white-space: nowrap;
 	}
 
-  
   .container {
     margin: auto;
     max-width: 1200px;
@@ -176,10 +175,10 @@ html, body {
   
   .tooth-grid.maxillary { align-items: flex-end; }
   .tooth-grid.mandibular { align-items: flex-start; }
-  .mandibular .tooth-button { transform: rotate(180deg); }
   .mandibular .tooth-label  { transform: rotate(180deg); }
+  .mandibular .tooth-button { transform: rotate(180deg); }
   .mandibular .tooth-button:hover { transform: rotate(180deg) scale(1.1); z-index: 1;}
-  
+
   #issues {
     margin-top: 2rem;
     font-size: 0.9rem;
