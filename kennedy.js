@@ -85,78 +85,57 @@ function updateDisabledTeeth() {
   });
 }
 
-// Classification logic
+// Classify Arch
 function classifyArch(missing, archRange) {
-  const ignore3 = document.getElementById('ignoreThirdMolars').checked;
-  const ignore2 = document.getElementById('ignoreSecondMolars').checked;
-  const isIgnored = t => (ignore3 && thirdMolars.includes(t)) || (ignore2 && secondMolars.includes(t));
+  if (!missing.length) return '**Fully dentate**';
 
-  const relevant = archRange.filter(t => !isIgnored(t));
-  const archMiss = missing.filter(n => relevant.includes(n));
-
-  if (archMiss.length === relevant.length) {
-    return `<strong>Not Applicable</strong><br><em>All non-ignored teeth missing</em>`;
+  const thirdMolars = [1, 16, 17, 32];
+  const onlyThirdsMissing = missing.every(tooth => thirdMolars.includes(tooth));
+  if (onlyThirdsMissing) {
+    return '**Unspecified Class**\n*Third molars only missing*';
   }
-  if (archMiss.length === 0) return null;
 
-  // contiguous regions
-  let regions = [], r = [];
-  relevant.forEach(t => {
-    if (archMiss.includes(t)) r.push(t);
-    else if (r.length) { regions.push(r); r = []; }
-  });
-  if (r.length) regions.push(r);
+  const present = archRange.filter(tooth => !missing.includes(tooth));
+  const min = Math.min(...archRange); // 1 or 17
+  const max = Math.max(...archRange); // 16 or 32
 
-  // drop pure 3rd-molar regions
-  regions = regions.filter(reg => !reg.every(t => thirdMolars.includes(t)));
+  const sorted = [...missing].sort((a, b) => a - b);
 
-  // Class IV
-  const isMax = archRange[0] === 1;
-  const ante = new Set(isMax ? [6,7,8,9,10,11] : [22,23,24,25,26,27]);
-  if (regions.length === 1 && regions[0].every(t => ante.has(t))) {
-    const mn = Math.min(...regions[0]), mx = Math.max(...regions[0]);
-    const mid = isMax ? 8 : 24;
-    if (mn <= mid && mx >= mid + 1) {
-      const cls = "Kennedy Class IV";
-      return `<strong>${cls}</strong><br><em>${descriptors[cls]}</em>`;
+  const isDistalLeftMissing = missing.includes(min);
+  const isDistalRightMissing = missing.includes(max);
+  if (isDistalLeftMissing && isDistalRightMissing) {
+    return '**Class I**\n*Bilateral posterior edentulous areas*';
+  }
+
+  if (isDistalLeftMissing || isDistalRightMissing) {
+    return '**Class II**\n*Unilateral posterior edentulous area*';
+  }
+
+  // Check for bounded edentulous space (Class III)
+  let boundedSpaces = 0;
+  for (let i = 0; i < sorted.length; i++) {
+    const tooth = sorted[i];
+    const left = tooth - 1;
+    const right = tooth + 1;
+    if (present.includes(left) && present.includes(right)) {
+      boundedSpaces++;
     }
   }
 
-  // distal extensions count
-  const L = relevant[0], R = relevant[relevant.length-1];
-  let distal = 0;
-  regions.forEach(reg => {
-    const mn = Math.min(...reg), mx = Math.max(...reg);
-    if (mn === L || mx === R) distal++;
-  });
+  if (boundedSpaces > 0) {
+    return '**Class III**\n*Bounded edentulous space (between present teeth)*';
+  }
 
-    // Classes I, II, III (with correct mod count for II)
-    let cls = "Kennedy Class III",
-    mod = regions.length - 1;
+  // Check for Class IV (anterior crossing midline)
+  const mid = Math.floor((min + max) / 2);
+  const crossesMidline = sorted.some(t => t <= mid) && sorted.some(t => t > mid);
+  if (crossesMidline && sorted.length === missing.length) {
+    return '**Class IV**\n*Single anterior space crossing the midline*';
+  }
 
-    if (distal >= 2) {
-    cls = "Kennedy Class I";
-    mod = regions.length - 2;
-    } else if (distal === 1) {
-    cls = "Kennedy Class II";
-    mod = regions.length - 1;      // now properly count modifications for Class II
-    }
-
-    // Always show “Modification” if mod > 0
-    return `<strong>${cls}${mod > 0 ? `, Modification ${mod}` : ''}</strong><br><em>${descriptors[cls]}</em>`;
+  return '**Unclassified**\n*Pattern does not match known Kennedy types*';
 }
 
-// Update output display
-function updateOutput() {
-  const sel = Array.from(toggleMissing);
-  const up = classifyArch(sel, [...Array(16)].map((_,i) => i+1));
-  const lo = classifyArch(sel, [...Array(16)].map((_,i) => i+17));
-  const out = [];
-  if (up) out.push(`<div><strong>Maxillary:</strong><br>${up}</div>`);
-  if (lo) out.push(`<div><strong>Mandibular:</strong><br>${lo}</div>`);
-  document.getElementById('output').innerHTML =
-    out.length ? out.join('') : 'No missing teeth.';
-}
 
 // Toggle a tooth’s selection
 function toggleTooth(n) {
