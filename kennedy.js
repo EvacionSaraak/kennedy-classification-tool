@@ -24,7 +24,7 @@ const descriptors = {
   "Class II": "Unilateral distal extension. (Posterior teeth missing on one side)",
   "Class III": "Unilateral bounded edentulous space. (Bounded by natural teeth)",
   "Class IV": "Single bilateral anterior space crossing the midline.",
-  "Unspecified": "No classification applies"
+  "Unspecified Class": "Kennedy Classification cannot be applied to this dentition."
 };
 
 // ========== Utility Functions ==========
