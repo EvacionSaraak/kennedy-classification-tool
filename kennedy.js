@@ -1,21 +1,29 @@
 // ========== State & Constants ==========
-let isUserTyping = false;
-let typingTimeout;
-let toggleMissing = new Set();
 let isDragging = false;
+let isUserTyping = false;
 let dragMode = null;
 let lastDragged = null;
 
+let typingTimeout;
+let toggleMissing = new Set();
+
 const thirdMolars = [1, 16, 17, 32];
 const secondMolars = [2, 15, 18, 31];
+const firstMolars = [3, 14, 19, 30];
+const secondPremolars = [4, 13, 20, 29];
+const firstPremolars = [5, 12, 21, 28];
+const canines = [6, 11, 22, 27];
+const lateralIncisors = [7, 10, 23, 26];
+const centralIncisors = [8, 9, 24, 25];
+
 const MAXILLARY_RANGE = [...Array(16)].map((_, i) => i + 1);
 const MANDIBULAR_RANGE = [...Array(16)].map((_, i) => i + 17);
 
 const descriptors = {
-  "Class I": "Bilateral distal extension (posterior teeth missing on both sides)",
-  "Class II": "Unilateral distal extension (posterior teeth missing on one side)",
-  "Class III": "Unilateral bounded edentulous space (bounded by natural teeth)",
-  "Class IV": "Single bilateral anterior space crossing the midline",
+  "Class I": "Bilateral distal extension. (Posterior teeth missing on both sides)",
+  "Class II": "Unilateral distal extension. (Posterior teeth missing on one side)",
+  "Class III": "Unilateral bounded edentulous space. (Bounded by natural teeth)",
+  "Class IV": "Single bilateral anterior space crossing the midline.",
   "Unspecified": "No classification applies"
 };
 
@@ -46,6 +54,20 @@ function getGaps(range, missing) {
   return gaps;
 }
 
+function getToothName(n) {
+  if (n < 1 || n > 32) return `Tooth ${n}`;
+  if (thirdMolars.includes(n)) return 'Third Molar (Posterior) (Wisdom Tooth)';
+  if (secondMolars.includes(n)) return 'Second Molar (Posterior)';
+  if (firstMolars.includes(n)) return 'First Molar (Posterior)';
+  if (secondPremolars.includes(n)) return 'Second Premolar (Bicuspid)';
+  if (firstPremolars.includes(n)) return 'First Premolar (Bicuspid)';
+  if (canines.includes(n)) return 'Canine (Anterior)';
+  if (lateralIncisors.includes(n)) return 'Lateral Incisor (Anterior)';
+  if (centralIncisors.includes(n)) return 'Central Incisor (Anterior)';
+
+  return `Tooth ${n}`;
+}
+
 function formatClassification(item) {
   const label = item.mod
     ? `<strong>${item.class} modification ${item.mod}</strong>`
@@ -53,43 +75,6 @@ function formatClassification(item) {
   return `${label}<br><em>${item.desc}</em>`;
 }
 
-function getToothName(n) {
-  const toothNames = {
-    1: 'Third Molar (Posterior) (Wisdom Tooth)',
-    2: 'Second Molar (Posterior)',
-    3: 'First Molar (Posterior)',
-    4: 'Second Premolar (Bicuspid)',
-    5: 'First Premolar (Bicuspid)',
-    6: 'Canine (Anterior)',
-    7: 'Lateral Incisor (Anterior)',
-    8: 'Central Incisor (Anterior)',
-    9: 'Central Incisor (Anterior)',
-    10: 'Lateral Incisor (Anterior)',
-    11: 'Canine (Anterior)',
-    12: 'First Premolar (Bicuspid)',
-    13: 'Second Premolar (Bicuspid)',
-    14: 'First Molar (Posterior)',
-    15: 'Second Molar (Posterior)',
-    16: 'Third Molar (Wisdom Tooth)',
-    17: 'Third Molar (Wisdom Tooth)',
-    18: 'Second Molar (Posterior)',
-    19: 'First Molar (Posterior)',
-    20: 'Second Premolar (Bicuspid)',
-    21: 'First Premolar (Bicuspid)',
-    22: 'Canine (Anterior)',
-    23: 'Lateral Incisor (Anterior)',
-    24: 'Central Incisor (Anterior)',
-    25: 'Central Incisor (Anterior)',
-    26: 'Lateral Incisor (Anterior)',
-    27: 'Canine (Anterior)',
-    28: 'First Premolar (Bicuspid)',
-    29: 'Second Premolar (Bicuspid)',
-    30: 'First Molar (Posterior)',
-    31: 'Second Molar (Posterior)',
-    32: 'Third Molar (Posterior) (Wisdom Tooth)',
-  };
-  return toothNames[n] || `Tooth ${n}`;
-}
 
 // ========== Classification ==========
 function classifyArch(selected, archRange, ignoreThird, ignoreSecond) {
@@ -123,30 +108,30 @@ function classifyArch(selected, archRange, ignoreThird, ignoreSecond) {
     return { class: "Class IV", desc: descriptors["Class IV"] };
   }
 
-  // Unspecified if both distal ends are missing (i.e., reaches both ends)
+  // Unspecified if both distal ends are missing and crosses the midline (i.e., reaches from one end to the other without pause)
   const reachesBothEnds = hasLeftDistal && hasRightDistal && crossesMidline;
   if (reachesBothEnds) {
     return { class: "Unspecified", desc: descriptors["Unspecified"] };
   }
 
-  // Class I: bilateral posterior extension
+  // Class I: bilateral posterior extension, measured by if both ends are missing
   if (hasLeftDistal && hasRightDistal) {
-    const mod = gaps.length - 2 > 0 ? gaps.length - 2 : undefined;
+    const mod = gaps.length - 2 > 0 ? gaps.length - 2 : undefined; // with gap identifying logic
     return { class: "Class I", desc: descriptors["Class I"], mod };
   }
 
-  // Class II: unilateral posterior extension
+  // Class II: unilateral posterior extension, measured by if only one end is missing
   if (hasLeftDistal || hasRightDistal) {
-    const mod = gaps.length - 1 > 0 ? gaps.length - 1 : undefined;
+    const mod = gaps.length - 1 > 0 ? gaps.length - 1 : undefined; // with gap identifying logic
     return { class: "Class II", desc: descriptors["Class II"], mod };
   }
 
-  // Class III: single bounded gap
+  // Class III: single bounded gap, measured by if no ends are missing but there is a single gap
   if (gaps.length === 1) {
     return { class: "Class III", desc: descriptors["Class III"] };
   }
 
-  // Class III with modification
+  // Class III with modification, measured by the number of gaps
   if (gaps.length > 1) {
     return { class: "Class III", desc: descriptors["Class III"], mod: gaps.length - 1 };
   }
