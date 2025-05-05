@@ -104,7 +104,7 @@ function classifyArch(selected, archRange, ignoreThird, ignoreSecond) {
     (ignoreSecond && secondMolars.includes(t))
   );
   if (original.length === ignored.length) {
-    return { class: 'Unspecified Class', desc: 'Only excluded teeth are missing.' };
+    return { cls: 'Unspecified Class', desc: 'Only excluded teeth are missing.' };
   }
 
   // Sort and group
@@ -127,9 +127,9 @@ function classifyArch(selected, archRange, ignoreThird, ignoreSecond) {
     const gap = gaps[0];
     const ends = [archRange[0], archRange[archRange.length - 1]];
     if (gap.includes(ends[0]) || gap.includes(ends[1])) {
-      return { class: 'Class II', desc: 'Unilateral edentulous area at the posterior.' };
+      return { cls: 'Class II', desc: 'Unilateral edentulous area at the posterior.' };
     } else {
-      return { class: 'Class III', desc: 'Unilateral edentulous area bounded by teeth.' };
+      return { cls: 'Class III', desc: 'Unilateral edentulous area bounded by teeth.' };
     }
   } else {
     const distalMost = gaps.some(g => {
@@ -146,7 +146,6 @@ function classifyArch(selected, archRange, ignoreThird, ignoreSecond) {
 
 // Formats Classification for Output
 function formatClassification(item) {
-  // item: { cls: string, desc: string }
   return `<strong>${item.cls}</strong><br><em>${item.desc}</em>`;
 }
 
