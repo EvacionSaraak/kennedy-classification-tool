@@ -7,6 +7,21 @@ html, body {
     overflow: hidden;
   }
   
+  .tooltip {
+	  position: absolute;
+	  padding: 6px 10px;
+	  background: #333;
+	  color: #fff;
+	  border-radius: 4px;
+	  font-size: 0.9rem;
+	  pointer-events: none;
+	  opacity: 0;
+	  transition: opacity 0.2s ease;
+	  z-index: 1000;
+	  white-space: nowrap;
+	}
+
+  
   .container {
     margin: auto;
     max-width: 1200px;
