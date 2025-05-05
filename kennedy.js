@@ -86,48 +86,63 @@ function updateDisabledTeeth() {
 }
 
 // Classify Arch
-function classifyArch(missing, archRange) {
+function classifyArch(selected, archRange, ignoreThird, ignoreSecond) {
+  const thirdMolars = archRange.filter(t => t === 1 || t === 16 || t === 17 || t === 32);
+  const secondMolars = archRange.filter(t => t === 2 || t === 15 || t === 18 || t === 31);
+
+  // Filter based on ignore flags
+  let missing = selected.filter(t => archRange.includes(t));
+  if (ignoreThird) missing = missing.filter(t => !thirdMolars.includes(t));
+  if (ignoreSecond) missing = missing.filter(t => !secondMolars.includes(t));
+
   if (missing.length === 0) return null;
 
-  const thirdMolars = [1, 16, 17, 32];
-  // Only third molars missing?
-  if (missing.every(t => thirdMolars.includes(t))) {
-    return { cls: 'Unspecified Class', desc: 'Third molars only missing' };
+  // If the only missing teeth are ignored ones, return Unspecified
+  const original = selected.filter(t => archRange.includes(t));
+  const ignored = original.filter(t =>
+    (ignoreThird && thirdMolars.includes(t)) ||
+    (ignoreSecond && secondMolars.includes(t))
+  );
+  if (original.length === ignored.length) {
+    return { class: 'Unspecified Class', desc: 'Only excluded teeth are missing.' };
   }
 
-  const present = archRange.filter(t => !missing.includes(t));
-  const min = Math.min(...archRange), max = Math.max(...archRange);
-  const sorted = [...missing].sort((a, b) => a - b);
-
-  const leftDistal  = missing.includes(min);
-  const rightDistal = missing.includes(max);
-
-  if (leftDistal && rightDistal) {
-    return { cls: 'Kennedy Class I', desc: 'Bilateral posterior edentulous areas' };
+  // Sort and group
+  const gaps = [];
+  let gap = [];
+  for (let i = 0; i < archRange.length; i++) {
+    const tooth = archRange[i];
+    if (missing.includes(tooth)) {
+      gap.push(tooth);
+    } else if (gap.length) {
+      gaps.push([...gap]);
+      gap = [];
+    }
   }
-  if (leftDistal || rightDistal) {
-    return { cls: 'Kennedy Class II', desc: 'Unilateral posterior edentulous area' };
-  }
+  if (gap.length) gaps.push([...gap]);
 
-  // Class III
-  let boundedSpaces = 0;
-  for (let t of sorted) {
-    if (present.includes(t - 1) && present.includes(t + 1)) boundedSpaces++;
+  if (gaps.length === 0) {
+    return null;
+  } else if (gaps.length === 1) {
+    const gap = gaps[0];
+    const ends = [archRange[0], archRange[archRange.length - 1]];
+    if (gap.includes(ends[0]) || gap.includes(ends[1])) {
+      return { class: 'Class II', desc: 'Unilateral edentulous area at the posterior.' };
+    } else {
+      return { class: 'Class III', desc: 'Unilateral edentulous area bounded by teeth.' };
+    }
+  } else {
+    const distalMost = gaps.some(g => {
+      const last = g[g.length - 1];
+      return last === archRange[0] || last === archRange[archRange.length - 1];
+    });
+    return {
+      class: distalMost ? 'Class I' : 'Class IV',
+      desc: distalMost ? 'Bilateral posterior edentulous areas.' : 'Bilateral anterior bounded edentulous areas.'
+    };
   }
-  if (boundedSpaces > 0) {
-    return { cls: 'Kennedy Class III', desc: 'Bounded edentulous space (between present teeth)' };
-  }
-
-  // Class IV
-  const mid = Math.floor((min + max) / 2);
-  const crosses = sorted.some(t => t <= mid) && sorted.some(t => t > mid);
-  if (crosses && sorted.length === missing.length) {
-    return { cls: 'Kennedy Class IV', desc: 'Single anterior space crossing the midline' };
-  }
-
-  // Fallback
-  return { cls: 'Unclassified', desc: 'Pattern does not match known Kennedy types' };
 }
+
 
 // Formats Classification for Output
 function formatClassification(item) {
@@ -139,20 +154,12 @@ function updateOutput() {
   const ignoreThird = document.getElementById("ignoreThirdMolars").checked;
   const ignoreSecond = document.getElementById("ignoreSecondMolars").checked;
 
-  // Get all selected/missing teeth from toggle buttons
-  let selected = Array.from(document.querySelectorAll(".tooth-button.selected"))
+  // All selected/missing teeth
+  const selected = Array.from(document.querySelectorAll(".tooth-button.selected"))
     .map(btn => parseInt(btn.dataset.tooth));
 
-  // Apply ignore logic
-  if (ignoreThird) {
-    selected = selected.filter(t => ![1, 16, 17, 32].includes(t));
-  }
-  if (ignoreSecond) {
-    selected = selected.filter(t => ![2, 15, 18, 31].includes(t));
-  }
-
-  const maxObj = classifyArch(selected, [...Array(16)].map((_, i) => i + 1));
-  const manObj = classifyArch(selected, [...Array(16)].map((_, i) => i + 17));
+  const maxObj = classifyArch(selected, [...Array(16)].map((_, i) => i + 1), ignoreThird, ignoreSecond);
+  const manObj = classifyArch(selected, [...Array(16)].map((_, i) => i + 17), ignoreThird, ignoreSecond);
 
   const parts = [];
   if (maxObj) parts.push(`<div><strong>Maxillary:</strong><br>${formatClassification(maxObj)}</div>`);
@@ -160,6 +167,7 @@ function updateOutput() {
 
   document.getElementById('output').innerHTML = parts.join('') || '';
 }
+
 
 
 // Toggle a tooth’s selection
