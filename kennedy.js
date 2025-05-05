@@ -86,67 +86,82 @@ function updateDisabledTeeth() {
 }
 
 // Classify Arch
-function classifyArch(selected, archRange, ignoreThird, ignoreSecond) {
-  const thirdMolars = archRange.filter(t => t === 1 || t === 16 || t === 17 || t === 32);
-  const secondMolars = archRange.filter(t => t === 2 || t === 15 || t === 18 || t === 31);
-
-  // Filter based on ignore flags
-  let missing = selected.filter(t => archRange.includes(t));
-  if (ignoreThird) missing = missing.filter(t => !thirdMolars.includes(t));
-  if (ignoreSecond) missing = missing.filter(t => !secondMolars.includes(t));
+/** Methodology in determining Classification
+ * Simplified Kennedy classifier.
+ * @param {number[]} selected      – all selected (missing) teeth
+ * @param {number[]} range         – full arch range (e.g. [1…16])
+ * @param {boolean} ignore3rd      – ignore 3rd molars?
+ * @param {boolean} ignore2nd      – ignore 2nd molars?
+ * @returns {{cls:string,desc:string,mod:number}|null}
+ */
+function classifyArch(selected, range, ignore3rd, ignore2nd) {
+  // 1) Filter selected teeth to what's in this arch, minus ignored
+  const ignored3 = new Set([1,16,17,32]);
+  const ignored2 = new Set([2,15,18,31]);
+  let missing = selected
+    .filter(t=>range.includes(t))
+    .filter(t=>!(ignore3rd && ignored3.has(t)))
+    .filter(t=>!(ignore2nd && ignored2.has(t)));
 
   if (missing.length === 0) return null;
 
-  // If the only missing teeth are ignored ones, return Unspecified
-  const original = selected.filter(t => archRange.includes(t));
-  const ignored = original.filter(t =>
-    (ignoreThird && thirdMolars.includes(t)) ||
-    (ignoreSecond && secondMolars.includes(t))
-  );
-  if (original.length === ignored.length) {
-    return { cls: 'Unspecified Class', desc: 'Only excluded teeth are missing.' };
+  // 2) If only ignored teeth were selected → Unspecified
+  const origInArch = selected.filter(t=>range.includes(t));
+  if (origInArch.length && origInArch.every(t=>
+       (ignore3rd && ignored3.has(t)) ||
+       (ignore2nd && ignored2.has(t))
+     )) {
+    return { cls:'Unspecified Class', desc:'Only excluded teeth are missing', mod:0 };
   }
 
-  // Sort and group
-  const gaps = [];
-  let gap = [];
-  for (let i = 0; i < archRange.length; i++) {
-    const tooth = archRange[i];
-    if (missing.includes(tooth)) {
-      gap.push(tooth);
-    } else if (gap.length) {
-      gaps.push([...gap]);
-      gap = [];
+  // 3) Build contiguous regions
+  const regions = [];
+  for (let t of range) {
+    if (missing.includes(t)) {
+      if (!regions.length || regions[regions.length-1].slice(-1)[0] !== t-1) {
+        regions.push([]);
+      }
+      regions[regions.length-1].push(t);
     }
   }
-  if (gap.length) gaps.push([...gap]);
 
-  if (gaps.length === 0) {
-    return null;
-  } else if (gaps.length === 1) {
-    const gap = gaps[0];
-    const ends = [archRange[0], archRange[archRange.length - 1]];
-    if (gap.includes(ends[0]) || gap.includes(ends[1])) {
-      return { cls: 'Class II', desc: 'Unilateral edentulous area at the posterior.' };
-    } else {
-      return { cls: 'Class III', desc: 'Unilateral edentulous area bounded by teeth.' };
+  // 4) Class IV: single region crossing the midline (teeth 8–9 or 24–25)
+  if (regions.length===1) {
+    const r = regions[0];
+    const mid1 = range[0]===1 ? 8 : 24;
+    const mid2 = mid1 + 1;
+    if (r.includes(mid1) && r.includes(mid2)) {
+      return { cls:'Kennedy Class IV', desc:descriptors['Kennedy Class IV'], mod:0 };
     }
+  }
+
+  // 5) Count how many regions touch an end (distal extensions)
+  const leftEnd  = range[0],
+        rightEnd = range[range.length-1];
+  const distalCount = regions.filter(r=>
+    r.includes(leftEnd) || r.includes(rightEnd)
+  ).length;
+
+  // 6) Decide Class & Mod
+  let cls, mod;
+  if (distalCount >= 2) {
+    cls = 'Kennedy Class I';
+    mod = regions.length - 2;
+  } else if (distalCount === 1) {
+    cls = 'Kennedy Class II';
+    mod = regions.length - 1;
   } else {
-    const distalMost = gaps.some(g => {
-      const last = g[g.length - 1];
-      return last === archRange[0] || last === archRange[archRange.length - 1];
-    });
-    return {
-      class: distalMost ? 'Class I' : 'Class IV',
-      desc: distalMost ? 'Bilateral posterior edentulous areas.' : 'Bilateral anterior bounded edentulous areas.'
-    };
+    cls = 'Kennedy Class III';
+    mod = regions.length - 1;
   }
-}
 
+  return { cls, desc: descriptors[cls], mod };
+}
 
 // Formats Classification for Output
 function formatClassification(item) {
-  return `<strong>${item.cls}</strong><br><em>${item.desc}</em>`;
+  const modText = item.mod > 0 ? `, Modification ${item.mod}` : '';    // Displays Modification for Classifications
+  return `<strong>${item.cls}${modText}</strong><br><em>${item.desc}</em>`;
 }
 
 function updateOutput() {
