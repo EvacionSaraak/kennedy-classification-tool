@@ -22,25 +22,6 @@ function capitalizeFirstLetter(val) {
     return String(val).charAt(0).toUpperCase() + String(val).slice(1);
 }
 
-//Updates Output
-function updateOutput() {
-  const sel = Array.from(toggleMissing);
-
-  // Call classifyArch for the maxillary (1–16)
-  const up = classifyArch(sel, [...Array(16)].map((_, i) => i + 1));
-
-  // Call classifyArch for the mandibular (17–32)
-  const lo = classifyArch(sel, [...Array(16)].map((_, i) => i + 17));
-
-  const out = [];
-  if (up) out.push(`<div><strong>Maxillary:</strong><br>${up}</div>`);
-  if (lo) out.push(`<div><strong>Mandibular:</strong><br>${lo}</div>`);
-
-  document.getElementById('output').innerHTML =
-    out.length ? out.join('') : 'No missing teeth.';
-}
-
-
 // Utility: decide shape
 function getToothType(n) {
   if ([1,2,3,14,15,16,17,18,19,30,31,32].includes(n)) return 'molar';
@@ -106,55 +87,66 @@ function updateDisabledTeeth() {
 
 // Classify Arch
 function classifyArch(missing, archRange) {
-  if (!missing.length) return '**Fully dentate**';
+  if (missing.length === 0) return null;
 
   const thirdMolars = [1, 16, 17, 32];
-  const onlyThirdsMissing = missing.every(tooth => thirdMolars.includes(tooth));
-  if (onlyThirdsMissing) {
-    return '**Unspecified Class**\n*Third molars only missing*';
+  // Only third molars missing?
+  if (missing.every(t => thirdMolars.includes(t))) {
+    return { cls: 'Unspecified Class', desc: 'Third molars only missing' };
   }
 
-  const present = archRange.filter(tooth => !missing.includes(tooth));
-  const min = Math.min(...archRange); // 1 or 17
-  const max = Math.max(...archRange); // 16 or 32
-
+  const present = archRange.filter(t => !missing.includes(t));
+  const min = Math.min(...archRange), max = Math.max(...archRange);
   const sorted = [...missing].sort((a, b) => a - b);
 
-  const isDistalLeftMissing = missing.includes(min);
-  const isDistalRightMissing = missing.includes(max);
-  if (isDistalLeftMissing && isDistalRightMissing) {
-    return '**Class I**\n*Bilateral posterior edentulous areas*';
+  const leftDistal  = missing.includes(min);
+  const rightDistal = missing.includes(max);
+
+  if (leftDistal && rightDistal) {
+    return { cls: 'Kennedy Class I', desc: 'Bilateral posterior edentulous areas' };
+  }
+  if (leftDistal || rightDistal) {
+    return { cls: 'Kennedy Class II', desc: 'Unilateral posterior edentulous area' };
   }
 
-  if (isDistalLeftMissing || isDistalRightMissing) {
-    return '**Class II**\n*Unilateral posterior edentulous area*';
-  }
-
-  // Check for bounded edentulous space (Class III)
+  // Class III
   let boundedSpaces = 0;
-  for (let i = 0; i < sorted.length; i++) {
-    const tooth = sorted[i];
-    const left = tooth - 1;
-    const right = tooth + 1;
-    if (present.includes(left) && present.includes(right)) {
-      boundedSpaces++;
-    }
+  for (let t of sorted) {
+    if (present.includes(t - 1) && present.includes(t + 1)) boundedSpaces++;
   }
-
   if (boundedSpaces > 0) {
-    return '**Class III**\n*Bounded edentulous space (between present teeth)*';
+    return { cls: 'Kennedy Class III', desc: 'Bounded edentulous space (between present teeth)' };
   }
 
-  // Check for Class IV (anterior crossing midline)
+  // Class IV
   const mid = Math.floor((min + max) / 2);
-  const crossesMidline = sorted.some(t => t <= mid) && sorted.some(t => t > mid);
-  if (crossesMidline && sorted.length === missing.length) {
-    return '**Class IV**\n*Single anterior space crossing the midline*';
+  const crosses = sorted.some(t => t <= mid) && sorted.some(t => t > mid);
+  if (crosses && sorted.length === missing.length) {
+    return { cls: 'Kennedy Class IV', desc: 'Single anterior space crossing the midline' };
   }
 
-  return '**Unclassified**\n*Pattern does not match known Kennedy types*';
+  // Fallback
+  return { cls: 'Unclassified', desc: 'Pattern does not match known Kennedy types' };
 }
 
+// Formats Classification for Output
+function formatClassification(item) {
+  // item: { cls: string, desc: string }
+  return `<strong>${item.cls}</strong><br><em>${item.desc}</em>`;
+}
+
+function updateOutput() {
+  const sel = Array.from(toggleMissing);
+
+  const maxObj = classifyArch(sel, [...Array(16)].map((_, i) => i + 1));
+  const manObj = classifyArch(sel, [...Array(16)].map((_, i) => i + 17));
+
+  const parts = [];
+  if (maxObj) parts.push(`<div><strong>Maxillary:</strong><br>${formatClassification(maxObj)}</div>`);
+  if (manObj) parts.push(`<div><strong>Mandibular:</strong><br>${formatClassification(manObj)}</div>`);
+
+  document.getElementById('output').innerHTML = parts.join('') || '';
+}
 
 // Toggle a tooth’s selection
 function toggleTooth(n) {
