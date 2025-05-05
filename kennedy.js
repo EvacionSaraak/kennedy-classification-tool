@@ -18,49 +18,6 @@ const descriptors = {
   "Kennedy Class IV":  "Anterior midline crossing missing teeth"
 };
 
-const toothNames = {
-  1: "Maxillary Right Third Molar",
-  2: "Maxillary Right Second Molar",
-  3: "Maxillary Right First Molar",
-  4: "Maxillary Right Second Premolar",
-  5: "Maxillary Right First Premolar",
-  6: "Maxillary Right Canine",
-  7: "Maxillary Right Lateral Incisor",
-  8: "Maxillary Right Central Incisor",
-  9: "Maxillary Left Central Incisor",
-  10: "Maxillary Left Lateral Incisor",
-  11: "Maxillary Left Canine",
-  12: "Maxillary Left First Premolar",
-  13: "Maxillary Left Second Premolar",
-  14: "Maxillary Left First Molar",
-  15: "Maxillary Left Second Molar",
-  16: "Maxillary Left Third Molar",
-  17: "Mandibular Left Third Molar",
-  18: "Mandibular Left Second Molar",
-  19: "Mandibular Left First Molar",
-  20: "Mandibular Left Second Premolar",
-  21: "Mandibular Left First Premolar",
-  22: "Mandibular Left Canine",
-  23: "Mandibular Left Lateral Incisor",
-  24: "Mandibular Left Central Incisor",
-  25: "Mandibular Right Central Incisor",
-  26: "Mandibular Right Lateral Incisor",
-  27: "Mandibular Right Canine",
-  28: "Mandibular Right First Premolar",
-  29: "Mandibular Right Second Premolar",
-  30: "Mandibular Right First Molar",
-  31: "Mandibular Right Second Molar",
-  32: "Mandibular Right Third Molar",
-};
-
-for (let i = 1; i <= 32; i++) {
-  const button = document.getElementById(`tooth-${i}`);
-  if (button) {
-    button.title = `${toothNames[i]} (Tooth #${i})`;
-  }
-}
-
-
 function capitalizeFirstLetter(val) {
     return String(val).charAt(0).toUpperCase() + String(val).slice(1);
 }
@@ -73,6 +30,45 @@ function getToothType(n) {
   return 'incisor';
 }
 
+function getToothName(n) {
+  const toothNames = {
+  1: 'Third Molar (Wisdom Tooth)',
+  2: 'Second Molar',
+  3: 'First Molar',
+  4: 'Second Bicuspid / Premolar',
+  5: 'First Bicuspid / Premolar',
+  6: 'Canine',
+  7: 'Lateral Incisor',
+  8: 'Central Incisor',
+  9: 'Central Incisor',
+  10: 'Lateral Incisor',
+  11: 'Canine',
+  12: 'First Bicuspid / Premolar',
+  13: 'Second Bicuspid / Premolar',
+  14: 'First Molar',
+  15: 'Second Molar',
+  16: 'Third Molar (Wisdom Tooth)',
+  17: 'Third Molar (Wisdom Tooth)',
+  18: 'Second Molar',
+  19: 'First Molar',
+  20: 'Second Bicuspid / Premolar',
+  21: 'First Bicuspid / Premolar',
+  22: 'Canine',
+  23: 'Lateral Incisor',
+  24: 'Central Incisor',
+  25: 'Central Incisor',
+  26: 'Lateral Incisor',
+  27: 'Canine',
+  28: 'First Bicuspid / Premolar',
+  29: 'Second Bicuspid / Premolar',
+  30: 'First Molar',
+  31: 'Second Molar',
+  32: 'Third Molar (Wisdom Tooth)',
+};
+  return toothNames[n] || `Tooth ${n}`;
+}
+
+
 // Build the tooth grids
 function createGrid(id, start, end, reverse = false) {
     const grid = document.getElementById(id);
@@ -80,15 +76,36 @@ function createGrid(id, start, end, reverse = false) {
       ? Array.from({ length: end - start + 1 }, (_, i) => end - i)  // Reversed range for mandibular
       : Array.from({ length: end - start + 1 }, (_, i) => start + i); // Normal range for maxillary
   
-    range.forEach(t => {
+  range.forEach(t => {
       const wrapper = document.createElement('div');
       wrapper.className = 'tooth-wrapper';
       wrapper.innerHTML = `
-        <div class="tooth-button ${getToothType(t)}" data-tooth="${t}">
+  <div class="tooth-button ${getToothType(t)}" data-tooth="${t}">
           <span class="tooth-label">${t}</span>
         </div>
         <span class="tooth-type-label">${capitalizeFirstLetter(getToothType(t))}</span>`;
       grid.appendChild(wrapper);
+	    
+	  const tooltip = document.getElementById('tooltip');
+
+	document.querySelectorAll('.tooth-button').forEach(btn => {
+	  const toothNum = btn.getAttribute('data-tooth');
+	  const name = getToothName(parseInt(toothNum));
+
+	  btn.addEventListener('mouseenter', (e) => {
+		tooltip.textContent = name;
+		tooltip.style.opacity = 1;
+	  });
+
+	  btn.addEventListener('mousemove', (e) => {
+		tooltip.style.left = e.pageX + 10 + 'px';
+		tooltip.style.top = e.pageY + 10 + 'px';
+	  });
+
+	  btn.addEventListener('mouseleave', () => {
+		tooltip.style.opacity = 0;
+	  });
+	});
     });
   }
   
