@@ -1,4 +1,2 @@
-KNOWN BUGS
--When Third Molars are selected (1,16,17,32)
-  Output: Class III
-  Expected: Class I
+KNOWN BUGS as of 2025/05/06 (YYYY-MM-DD)
+-None
