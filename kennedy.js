@@ -282,12 +282,16 @@ document.addEventListener('mouseup', onMouseUp);
 
 document.getElementById('teethInput').addEventListener('input', (e) => {
   const input = e.target.value.trim();
-  const valid = /^(\s*\d{1,2}\s*(,\s*\d{1,2}\s*)*)?$/.test(input);
+  const valid = /^(\s*\d{1,2}\s*([.,]\s*\d{1,2}\s*)*)?$/.test(input);
   e.target.classList.toggle('invalid', !valid);
   if (!valid) return;
 
   isUserTyping = true;
-  const values = input.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n) && n >= 1 && n <= 32);
+  const values = input
+    .split(/[.,]/)  // split on comma or dot
+    .map(n => parseInt(n.trim()))
+    .filter(n => !isNaN(n) && n >= 1 && n <= 32);
+
   toggleMissing.clear();
   values.forEach(n => toggleMissing.add(n));
   renderButtons();
