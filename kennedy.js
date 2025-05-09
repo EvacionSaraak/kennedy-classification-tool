@@ -24,7 +24,7 @@ const descriptors = {
   "Class II": "Unilateral distal extension. (Posterior teeth missing on one side)",
   "Class III": "Unilateral bounded edentulous space. (Bounded by natural teeth)",
   "Class IV": "Single bilateral anterior space crossing the midline.",
-  "Unspecified Class": "Kennedy Classification cannot be applied to this dentition."
+  "Unspecified Class": "Kennedy Classification cannot be applied to this dentition. Please determine classification via existing bone density."
 };
 
 // ========== Utility Functions ==========
@@ -136,7 +136,7 @@ function classifyArch(selected, archRange, ignoreThird, ignoreSecond) {
     return { class: "Class III", desc: descriptors["Class III"], mod: gaps.length - 1 };
   }
 
-  return { class: "Unspecified", desc: descriptors["Unspecified"] };
+  return { class: "Unspecified Class", desc: descriptors["Unspecified Class"] };
 }
 
 
