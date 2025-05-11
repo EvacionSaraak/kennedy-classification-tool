@@ -1,11 +1,11 @@
 html, body {
   margin: 0;
-  padding: 0;
+  padding: 1%;
   height: 100%;
   font-family: Arial, sans-serif;
   overflow-x: hidden;
   overflow: hidden;
-  background-color: #000; /* Add this line for black background */
+  background-color: #252525; /* Add this line for black background */
 }
   .tooltip {
 	  position: absolute;
@@ -22,7 +22,7 @@ html, body {
 	}
 
   .container {
-    margin: auto;
+    margin: 2% auto auto auto;
     max-width: 1200px;
     padding: 2rem;
     background: #fff;
