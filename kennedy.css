@@ -1,12 +1,12 @@
 html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    font-family: Arial, sans-serif;
-    overflow-x: hidden;
-    overflow: hidden;
-  }
-
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: Arial, sans-serif;
+  overflow-x: hidden;
+  overflow: hidden;
+  background-color: #000; /* Add this line for black background */
+}
   .tooltip {
 	  position: absolute;
 	  padding: 6px 10px;
